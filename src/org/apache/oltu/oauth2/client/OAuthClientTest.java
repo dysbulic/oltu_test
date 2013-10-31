@@ -45,12 +45,21 @@ import org.apache.oltu.oauth2.common.message.types.GrantType;
 public class OAuthClientTest {
 
     public static void main(String[] args) throws OAuthSystemException, IOException {
-
+    	String callback = "http://localhost:8080/";
+    	String clientId = "131804060198305";
+    	String secret = "3acb294b071c9aec86d60ae3daf32a93";
+    	
+    	String authUri = "http://smoke-track.herokuapp.com/oauth/authorize";
+    	callback = "urn:ietf:wg:oauth:2.0:oob";
+    	clientId = "728ad798943fff1afd90e79765e9534ef52a5b166cfd25f055d1c8ff6f3ae7fd";
+    	secret = "3728e0449052b616e2465c04d3cbd792f2d37e70ca64075708bfe8b53c28d529";
+    	
         try {
             OAuthClientRequest request = OAuthClientRequest
-                .authorizationProvider(OAuthProviderType.FACEBOOK)
-                .setClientId("131804060198305")
-                .setRedirectURI("http://localhost:8080/")
+                //.authorizationProvider(OAuthProviderType.FACEBOOK)
+            	.authorizationLocation(authUri)
+                .setClientId(clientId)
+                .setRedirectURI(callback)
                 .buildQueryMessage();
 
             //in web application you make redirection to uri:
@@ -63,9 +72,9 @@ public class OAuthClientTest {
             request = OAuthClientRequest
             	.tokenProvider(OAuthProviderType.FACEBOOK)
                 .setGrantType(GrantType.AUTHORIZATION_CODE)
-                .setClientId("131804060198305")
-                .setClientSecret("3acb294b071c9aec86d60ae3daf32a93")
-                .setRedirectURI("http://localhost:8080/")
+                .setClientId(clientId)
+                .setClientSecret(secret)
+                .setRedirectURI(callback)
                 .setCode(code)
                 .buildBodyMessage();
 
