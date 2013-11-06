@@ -28,19 +28,14 @@ import java.io.InputStreamReader;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
-import org.apache.oltu.oauth2.client.response.GitHubTokenResponse;
-import org.apache.oltu.oauth2.common.OAuthProviderType;
+import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 
 /**
  * Simple example that shows how to get OAuth 2.0 access token from Facebook
- * using Amber OAuth 2.0 library
- *
- *
- *
- *
+ * using Oltu OAuth 2.0 library
  */
 public class OAuthClientTest {
 
@@ -50,16 +45,17 @@ public class OAuthClientTest {
     	String secret = "3acb294b071c9aec86d60ae3daf32a93";
     	
     	String authUri = "http://smoke-track.herokuapp.com/oauth/authorize";
-    	callback = "urn:ietf:wg:oauth:2.0:oob";
+    	callback = "http://localhost:8080";
     	clientId = "728ad798943fff1afd90e79765e9534ef52a5b166cfd25f055d1c8ff6f3ae7fd";
     	secret = "3728e0449052b616e2465c04d3cbd792f2d37e70ca64075708bfe8b53c28d529";
+    	String tokenUri = "http://smoke-track.herokuapp.com/oauth/token";
     	
-        try {
+    	try {
             OAuthClientRequest request = OAuthClientRequest
-                //.authorizationProvider(OAuthProviderType.FACEBOOK)
             	.authorizationLocation(authUri)
                 .setClientId(clientId)
                 .setRedirectURI(callback)
+                .setResponseType("code")
                 .buildQueryMessage();
 
             //in web application you make redirection to uri:
@@ -70,21 +66,17 @@ public class OAuthClientTest {
             String code = br.readLine();
 
             request = OAuthClientRequest
-            	.tokenProvider(OAuthProviderType.FACEBOOK)
+            	.tokenLocation(tokenUri)
                 .setGrantType(GrantType.AUTHORIZATION_CODE)
                 .setClientId(clientId)
                 .setClientSecret(secret)
                 .setRedirectURI(callback)
                 .setCode(code)
                 .buildBodyMessage();
-
+            
             OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
 
-            //Facebook is not fully compatible with OAuth 2.0 draft 10, access token response is
-            //application/x-www-form-urlencoded, not json encoded so we use dedicated response class for that
-            //Own response class is an easy way to deal with oauth providers that introduce modifications to
-            //OAuth specification
-            GitHubTokenResponse oAuthResponse = oAuthClient.accessToken(request, GitHubTokenResponse.class);
+            OAuthJSONAccessTokenResponse oAuthResponse = oAuthClient.accessToken(request, OAuthJSONAccessTokenResponse.class);
 
             System.out.println(
                 "Access Token: " + oAuthResponse.getAccessToken() + ", Expires in: " + oAuthResponse
