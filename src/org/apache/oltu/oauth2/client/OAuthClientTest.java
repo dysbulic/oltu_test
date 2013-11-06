@@ -22,8 +22,12 @@
 package org.apache.oltu.oauth2.client;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
@@ -32,6 +36,8 @@ import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Simple example that shows how to get OAuth 2.0 access token from Facebook
@@ -44,11 +50,19 @@ public class OAuthClientTest {
     	String clientId = "131804060198305";
     	String secret = "3acb294b071c9aec86d60ae3daf32a93";
     	
-    	String authUri = "http://smoke-track.herokuapp.com/oauth/authorize";
-    	callback = "http://localhost:8080";
-    	clientId = "728ad798943fff1afd90e79765e9534ef52a5b166cfd25f055d1c8ff6f3ae7fd";
+    	String host = "http://smoke-track.herokuapp.com";
+    	host = "http://localhost:3000";
+    	String authUri = host + "/oauth/authorize";
+    	String tokenUri = host + "/oauth/token";
+        String appUri = host + "/habits";
+
+        callback = "http://localhost:8080";
+    	
+        clientId = "728ad798943fff1afd90e79765e9534ef52a5b166cfd25f055d1c8ff6f3ae7fd";
     	secret = "3728e0449052b616e2465c04d3cbd792f2d37e70ca64075708bfe8b53c28d529";
-    	String tokenUri = "http://smoke-track.herokuapp.com/oauth/token";
+    	
+    	clientId = "e42ae40e269d9a546316f93e42edf52a18934c6a68de035f8b615343c4b81eb0";
+    	secret = "3b1a720c311321c29852dc4735517f6ece0c991d4be677539cb430c7ee4d1097";
     	
     	try {
             OAuthClientRequest request = OAuthClientRequest
@@ -81,9 +95,42 @@ public class OAuthClientTest {
             System.out.println(
                 "Access Token: " + oAuthResponse.getAccessToken() + ", Expires in: " + oAuthResponse
                     .getExpiresIn());
-        } catch (OAuthProblemException e) {
+
+            URL appURL = new URL(appUri);
+            HttpURLConnection con = (HttpURLConnection) appURL.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty("Accept", "application/json");
+            con.setRequestProperty("Accept-Encoding", "gzip, deflate");
+            con.setRequestProperty("Authorization", "Bearer " + oAuthResponse.getAccessToken());
+
+            JSONObject body = new JSONObject();
+            body.put("color", "green");
+            body.put("name", "Java Test");
+            body.put("description", "Test Habit");
+            
+            byte[] bodyBytes = body.toString().getBytes();
+
+            con.setRequestProperty("Content-Length", Integer.toString(bodyBytes.length));
+
+            con.setInstanceFollowRedirects(false);
+            con.setUseCaches(false);
+            con.setDoInput(true);
+            con.setDoOutput(true);
+
+            DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+            wr.write(bodyBytes);
+            wr.flush();
+            wr.close();
+
+            //InputStream is = con.getInputStream();
+            int status = con.getResponseCode();
+            System.out.println("Status: " + status);
+    	} catch (OAuthProblemException e) {
             System.out.println("OAuth error: " + e.getError());
             System.out.println("OAuth error description: " + e.getDescription());
-        }
+        } catch (JSONException e) {
+			e.printStackTrace();
+		}
     }
 }
